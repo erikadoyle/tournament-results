@@ -12,7 +12,8 @@ From a GitHub shell:
  2. vagrant up (you can turn off the VM with 'vagrant halt')
  3. vagrant ssh (from here you can type 'exit' to log out)
  4. cd /vagrant/tournament
- 5. python tournament_results.py
+ 5. psql -f tournament.sql 
+ 6. python tournament_results.py
 
 # Credits
 Test suite provided by Udacity. tournament database schema (tournament.sql) and Python functions written by Erika Navara.
