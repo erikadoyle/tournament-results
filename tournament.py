@@ -7,53 +7,60 @@ import psycopg2
 import itertools
 
 
-def connect():
+def connect(database_name="tournament"):
     """Connect to the PostgreSQL database.  Returns a database connection."""
-    return psycopg2.connect("dbname=tournament")
+    try:
+        db = psycopg2.connect(dbname=database_name)
+        cursor = db.cursor()
+        return db, cursor
+    except:
+        print("Error connecting to the database.")
 
 
 def deleteMatches():
     """Remove all the match records from the database."""
-    pgsql = connect()
-    cursor = pgsql.cursor()
-    cursor.execute("delete from matches")
-    pgsql.commit()
-    pgsql.close()
+    db, cursor = connect()
+    query = "TRUNCATE matches"
+    cursor.execute(query,)
+    db.commit()
+    db.close()
 
 
 def deletePlayers():
     """Remove all the player records from the database."""
-    pgsql = connect()
-    cursor = pgsql.cursor()
-    cursor.execute("delete from players")
-    pgsql.commit()
-    pgsql.close()
+    db, cursor = connect()
+    query = "DELETE FROM players"
+    cursor.execute(query)
+    db.commit()
+    db.close()
 
 
 def countPlayers():
     """Returns the number of players currently registered."""
-    pgsql = connect()
-    cursor = pgsql.cursor()
-    cursor.execute("select count(*) as total from players")
+    db, cursor = connect()
+    query = "SELECT COUNT(*) AS total FROM players"
+    cursor.execute(query)
     total = cursor.fetchone()
-    pgsql.close()
+    db.close()
     return total[0]
 
 
 def registerPlayer(name):
     """Adds a player to the tournament database.
 
-    The database assigns a unique serial id number for the player.
+    The database assigns a unique serial id number for the player.  (This
+    should be handled by your SQL database schema, not in your Python code.)
 
     Args:
       name: the player's full name (need not be unique).
     """
     """Returns the number of players currently registered."""
-    pgsql = connect()
-    cursor = pgsql.cursor()
-    cursor.execute("insert into players (name) values (%s)", (name,))
-    pgsql.commit()
-    pgsql.close()
+    db, cursor = connect()
+    query = "INSERT INTO players (name) VALUES (%s)"
+    param = (name,)
+    cursor.execute(query, param)
+    db.commit()
+    db.close()
     return countPlayers()
 
 
@@ -70,23 +77,22 @@ def playerStandings():
         wins: the number of matches the player has won
         matches: the number of matches the player has played
     """
-    pgsql = connect()
-    cursor = pgsql.cursor()
+    db, cursor = connect()
     # Union all technique discovered via http://stackoverflow.com/questions/
     # 30091148/postgresql-display-and-count-distinct-occurrences-of-values
     # -across-multiple-col
+
     cursor.execute("select id, name, count(matches.winner) as wins,"
                    "(select count(*) as games from("
-                   "    select p1 as pid from matches"
-                   "    union all select p2 from matches"
+                   "    select winner as pid from matches"
+                   "    union all select loser from matches"
                    ") games where games.pid = players.id) "
                    "from players left join matches "
                    "on players.id = matches.winner "
                    "group by players.id, players.name "
                    "order by wins desc")
-
     playerslist = cursor.fetchall()
-    pgsql.close()
+    db.close()
     return playerslist
 
 
@@ -97,12 +103,12 @@ def reportMatch(winner, loser):
       winner:  the id number of the player who won
       loser:  the id number of the player who lost
     """
-    pgsql = connect()
-    cursor = pgsql.cursor()
-    cursor.execute("insert into matches (p1, p2, winner) values (%s, %s, %s)",
-                   (winner, loser, winner))
-    pgsql.commit()
-    pgsql.close()
+    db, cursor = connect()
+    query = "INSERT INTO matches (winner, loser) VALUES (%s, %s)"
+    params = (winner, loser)
+    cursor.execute(query, params)
+    db.commit()
+    db.close()
 
 
 def swissPairings():
