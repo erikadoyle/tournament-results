@@ -17,3 +17,10 @@ CREATE TABLE matches(
   loser INTEGER references players(id),
   PRIMARY KEY (winner, loser)
 );
+
+-- Create a view that tallies total matches per player
+CREATE OR REPLACE VIEW games_view AS
+SELECT players.id, COUNT(matches.*) AS games
+FROM players LEFT JOIN matches
+ON players.id = matches.winner OR players.id = matches.loser
+GROUP BY players.id;

@@ -82,15 +82,13 @@ def playerStandings():
     # 30091148/postgresql-display-and-count-distinct-occurrences-of-values
     # -across-multiple-col
 
-    cursor.execute("select id, name, count(matches.winner) as wins,"
-                   "(select count(*) as games from("
-                   "    select winner as pid from matches"
-                   "    union all select loser from matches"
-                   ") games where games.pid = players.id) "
-                   "from players left join matches "
-                   "on players.id = matches.winner "
-                   "group by players.id, players.name "
-                   "order by wins desc")
+    query = ("SELECT id, name, COUNT(matches.winner) AS wins, "
+             "(SELECT games FROM games_view WHERE games_view.id = players.id) "
+             "FROM players LEFT JOIN matches "
+             "ON players.id = matches.winner "
+             "GROUP BY players.id, players.name "
+             "ORDER BY wins DESC")
+    cursor.execute(query)
     playerslist = cursor.fetchall()
     db.close()
     return playerslist
