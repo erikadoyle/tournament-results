@@ -1,16 +1,19 @@
 -- Table definitions for the tournament project.
+--
+-- Clean up any previous tournament databases
+DROP DATABASE IF EXISTS tournament;
 
 -- Create the database and tables
 CREATE DATABASE tournament;
 \connect tournament;
 
 CREATE TABLE players(
-  id SERIAL UNIQUE,
+  id SERIAL PRIMARY KEY,
   name TEXT
 );
 
 CREATE TABLE matches(
-  p1 INTEGER references players(id),
-  p2 INTEGER references players(id),
-  winner INTEGER references players(id)
+  winner INTEGER references players(id),
+  loser INTEGER references players(id),
+  PRIMARY KEY (winner, loser)
 );
